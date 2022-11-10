@@ -25,13 +25,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components");
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UBoxComponent* OverlapComp;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components");
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UDecalComponent* DecalComp;
 
-	UPROPERTY(EditAnywhere, Category = "Sound");
+	UPROPERTY(EditAnywhere, Category = "Sound")
 	USoundBase* Sound;
 
 	UFUNCTION()
