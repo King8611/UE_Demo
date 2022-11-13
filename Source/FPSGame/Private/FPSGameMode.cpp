@@ -17,12 +17,12 @@ AFPSGameMode::AFPSGameMode()
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
 }
-void AFPSGameMode::CompleteMission(APawn* InstigatorPawn) 
+void AFPSGameMode::CompleteMission(APawn* InstigatorPawn, bool bIsSuccess)
 {
 	if (InstigatorPawn) {
 		UE_LOG(LogTemp, Log, TEXT("AFPSGameMode::CompleteMission !!"));
 		InstigatorPawn->DisableInput(nullptr);
-		OnMissionComplete(InstigatorPawn);
+		OnMissionComplete(InstigatorPawn, bIsSuccess);
 	}
 
 	if (!SpectatingViewpointClass) {

@@ -3,6 +3,8 @@
 
 #include "FPSAIGuard.h"
 #include "DrawDebugHelpers.h"
+#include "FPSGameMode.h"
+
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
 {
@@ -17,7 +19,8 @@ AFPSAIGuard::AFPSAIGuard()
 void AFPSAIGuard::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	OriginalRotation = GetActorRotation();
+	GuardState = EAIState::Idle;
 }
 
 // Called every frame
@@ -34,6 +37,12 @@ void AFPSAIGuard::OnPawnSeen(APawn* Pawn)
 		return;
 	}
 	DrawDebugSphere(GetWorld(), Pawn->GetActorLocation(), 32, 12, FColor::Blue, false, 10);
+
+	SetGuardState(EAIState::Alerted);
+	AFPSGameMode* GameMode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode) {
+		GameMode->CompleteMission(Pawn, false);
+	}
 }
 
 // Called to bind functionality to input
@@ -44,5 +53,42 @@ void AFPSAIGuard::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 }
 void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, float Volume)
 {
+	if (GuardState == EAIState::Alerted)
+	{
+		return;
+	}
 	DrawDebugSphere(GetWorld(), NoiseInstigator->GetActorLocation(), 32, 12, FColor::Yellow, false, 10);
+	FVector Direction = Location - GetActorLocation();
+	Direction.Normalize();
+
+	FRotator NewLookAt = FRotationMatrix::MakeFromX(Direction).Rotator();
+	NewLookAt.Pitch = 0;
+	NewLookAt.Roll = 0;
+	SetActorRotation(NewLookAt);
+
+	GetWorldTimerManager().ClearTimer(TimerHandleResetOrientation);
+	GetWorldTimerManager().SetTimer(TimerHandleResetOrientation, this, &AFPSAIGuard::ResetOrientation, 3);
+
+	SetGuardState(EAIState::Suspicious);
+}
+
+
+void AFPSAIGuard::ResetOrientation()
+{
+	if (GuardState == EAIState::Alerted)
+	{
+		return;
+	}
+	SetActorRotation(OriginalRotation);
+	SetGuardState(EAIState::Idle);
+}
+
+void AFPSAIGuard::SetGuardState(EAIState NewState)
+{
+	if (NewState == GuardState)
+	{
+		return;
+	}
+	GuardState = NewState;
+	OnChangeGuardState(GuardState);
 }
