@@ -4,7 +4,7 @@
 #include "FPSAIGuard.h"
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
-
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
 {
@@ -21,13 +21,26 @@ void AFPSAIGuard::BeginPlay()
 	Super::BeginPlay();
 	OriginalRotation = GetActorRotation();
 	GuardState = EAIState::Idle;
+	if (bPatrol)
+	{
+		MoveToNextPoint();
+	}
 }
 
 // Called every frame
 void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (CurrentPatrolPoint)
+	{
+		FVector Delta = GetActorLocation() - CurrentPatrolPoint->GetActorLocation();
+		float DistanceToGoal = Delta.Size();
+		UE_LOG(LogTemp, Log, TEXT("AFPSAIGuard::Tick %f"), DistanceToGoal);
+		if (DistanceToGoal < 150)
+		{
+			MoveToNextPoint();
+		}
+	}
 }
 
 void AFPSAIGuard::OnPawnSeen(APawn* Pawn)
@@ -42,6 +55,12 @@ void AFPSAIGuard::OnPawnSeen(APawn* Pawn)
 	AFPSGameMode* GameMode = Cast<AFPSGameMode>(GetWorld()->GetAuthGameMode());
 	if (GameMode) {
 		GameMode->CompleteMission(Pawn, false);
+	}
+
+	AController* Controller = GetController();
+	if (Controller)
+	{
+		Controller->StopMovement();
 	}
 }
 
@@ -70,6 +89,12 @@ void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, 
 	GetWorldTimerManager().SetTimer(TimerHandleResetOrientation, this, &AFPSAIGuard::ResetOrientation, 3);
 
 	SetGuardState(EAIState::Suspicious);
+
+	AController* Controller = GetController();
+	if (Controller)
+	{
+		Controller->StopMovement();
+	}
 }
 
 
@@ -81,6 +106,11 @@ void AFPSAIGuard::ResetOrientation()
 	}
 	SetActorRotation(OriginalRotation);
 	SetGuardState(EAIState::Idle);
+
+	if (bPatrol)
+	{
+		MoveToNextPoint();
+	}
 }
 
 void AFPSAIGuard::SetGuardState(EAIState NewState)
@@ -92,3 +122,18 @@ void AFPSAIGuard::SetGuardState(EAIState NewState)
 	GuardState = NewState;
 	OnChangeGuardState(GuardState);
 }
+
+
+void AFPSAIGuard::MoveToNextPoint()
+{
+	if (CurrentPatrolPoint == nullptr || CurrentPatrolPoint == SecondPatrolPoint)
+	{
+		CurrentPatrolPoint = FirstPatrolPoint;
+	}
+	else
+	{
+		CurrentPatrolPoint = SecondPatrolPoint;
+	}
+	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), CurrentPatrolPoint);
+}
+//UAIBlueprintHelperLibrary
