@@ -20,6 +20,7 @@ class AFPSCharacter : public ACharacter
 	GENERATED_BODY()
 
 protected:
+	virtual void Tick(float DeltaTime) override;
 
 	/** Pawn mesh: 1st person view  */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
@@ -66,12 +67,14 @@ protected:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
+
 public:
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1PComponent; }
 
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
-
 };
 
