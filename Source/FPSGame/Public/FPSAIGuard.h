@@ -27,6 +27,13 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnRep_GuardState();
+
+	UPROPERTY(ReplicatedUsing = OnRep_GuardState)
+	EAIState GuardState;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -47,9 +54,10 @@ public:
 
 	void ResetOrientation();
 
+
 	FRotator OriginalRotation;
 
-	EAIState GuardState;	
+
 	void SetGuardState(EAIState NewState);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "AI")

@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Net/UnrealNetwork.h"
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
 {
@@ -35,7 +36,7 @@ void AFPSAIGuard::Tick(float DeltaTime)
 	{
 		FVector Delta = GetActorLocation() - CurrentPatrolPoint->GetActorLocation();
 		float DistanceToGoal = Delta.Size();
-		UE_LOG(LogTemp, Log, TEXT("AFPSAIGuard::Tick %f"), DistanceToGoal);
+		//UE_LOG(LogTemp, Log, TEXT("AFPSAIGuard::Tick %f"), DistanceToGoal);
 		if (DistanceToGoal < 150)
 		{
 			MoveToNextPoint();
@@ -115,14 +116,19 @@ void AFPSAIGuard::ResetOrientation()
 
 void AFPSAIGuard::SetGuardState(EAIState NewState)
 {
+	UE_LOG(LogTemp, Log, TEXT("AFPSAIGuard::SetGuardState"));
 	if (NewState == GuardState)
 	{
 		return;
 	}
 	GuardState = NewState;
-	OnChangeGuardState(GuardState);
+	OnRep_GuardState();
 }
 
+void AFPSAIGuard::OnRep_GuardState()
+{
+	OnChangeGuardState(GuardState);
+}
 
 void AFPSAIGuard::MoveToNextPoint()
 {
@@ -137,3 +143,9 @@ void AFPSAIGuard::MoveToNextPoint()
 	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), CurrentPatrolPoint);
 }
 //UAIBlueprintHelperLibrary
+
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFPSAIGuard, GuardState)
+}
